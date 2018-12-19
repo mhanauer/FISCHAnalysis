@@ -1,5 +1,6 @@
 ---
-title: "FISCHAnalysis"
+---
+title: "ITS"
 output: html_document
 ---
 
@@ -58,9 +59,6 @@ If you can change NA to 1 for repeat instance variable
 
 Need a time variable
 ```{r}
-
-
-
 dat_FISCH_agg = data.frame(record_id = dat_FISCH$record_id, redcap_repeat_instance = dat_FISCH$redcap_repeat_instance, colevel_1 = dat_FISCH$colevel_1, colevel_2 = dat_FISCH$colevel_2)
 
 head(dat_FISCH_agg)
@@ -68,7 +66,7 @@ head(dat_FISCH_agg)
 ### Makes every variable have NA's
 dat_FISCH_agg[is.na(dat_FISCH_agg)]= 0
 
-dat_FISCH_agg
+head(dat_FISCH_agg)
 ```
 
 
@@ -81,7 +79,7 @@ Make wide, and then grab just the ones you want and subset the data, then make l
 
 ```{r}
 dat_FISCH_agg = reshape(dat_FISCH_agg, v.names = c("colevel_1", "colevel_2"), direction = "wide", timevar = "redcap_repeat_instance", idvar = "record_id")
-dat_FISCH_agg
+head(dat_FISCH_agg)
 ```
 Now we need to drop the extra rows and only keep those with data and go long
 ```{r}
@@ -96,5 +94,22 @@ dat_FISCH_agg_long = dat_FISCH_agg_long_test[order(dat_FISCH_agg_long_test$recor
 head(dat_FISCH_agg_long)
 ```
 Now bring it back to the original data set
+
+If seems like if colevel is NA then there was no data for that data point ever, so you can delete it.
+
+Then you can aggregate back the data.  
+```{r}
+dat_FISCH_agg_long
+dim(dat_FISCH)
+dim(dat_FISCH_agg_long)
+dat_FISCH_agg_long = na.omit(dat_FISCH_agg_long)
+dim(dat_FISCH_agg_long)
+dat_FISCH_agg_long
+
+dat_FISCH_complete = data.frame(dat_FISCH_agg_long, dat_FISCH)
+head(dat_FISCH_complete)
+dim(dat_FISCH_complete)
+```
+Now repeat this process for two other questions that we ask
 
 
