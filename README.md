@@ -18,8 +18,8 @@ Load FISCH data
 Save the loaded data as something else so we don't have to reload the data everytime
 We want to load the data with na.strings = "", because we want R to treat blanks as NAs.
 ```{r}
-setwd("~/Desktop")
-data_FISCH = read.csv("FISCH_DATA_2018-12-30_0750.csv", header = TRUE, na.strings = "")
+setwd("S:/Indiana Research & Evaluation/FISCH (Jon's Study)/Data")
+data_FISCH = read.csv("FISCH_DATA_2019-01-02_1152.csv", header = TRUE, na.strings = "")
 dat_FISCH = data_FISCH
 ```
 First thing we want to get is get rid of people who are not eligible for the program.
