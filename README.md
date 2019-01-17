@@ -1,5 +1,6 @@
 ---
-title: "FISCHAnalysis"
+---
+title: "FISCH Analysis"
 output: html_document
 ---
 
@@ -8,43 +9,21 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 Library packages
 ```{r}
-library(lavaan)
+library(reshape2)
 library(psych)
-library(semTools)
-library(dplyr)
-library(ltm)
-library(prettyR)
-library(semTools)
-library(GPArotation)
-library(lavaan)
-library(psych)
-library(semTools)
-library(dplyr)
-library(ltm)
-library(lordif)
-library(Amelia)
-library(plyr)
-library(paran)
-library(caret)
-library(ggplot2)
-library(pracma)
-library(AER)
-library(pscl)
-library(TSA)
-library(TTR)
-library(smooth)
 library(descr)
+library(prettyR)
 ```
 Load FISCH data
+Save the loaded data as something else so we don't have to reload the data everytime
+We want to load the data with na.strings = "", because we want R to treat blanks as NAs.
 ```{r}
+setwd("S:/Indiana Research & Evaluation/FISCH (Jon's Study)/Data")
+data_FISCH = read.csv("FISCH_DATA_2019-01-17_1012.csv", header = TRUE, na.strings = "")
 dat_FISCH = data_FISCH
 ```
-Just explore the data set
-Need to exclude people that are ineligible
-
-In theory there anyone who says a 1 and 0 on the two inclusion criteria questions should be eligible
-
-But there is some missing data for these questions 
+First thing we want to get is get rid of people who are not eligible for the program.
+We can do this by keeping everyone who is NA on the ineligible criteria, because everyone who is eligible has an NA and those who are not ineligible have a 1.  This can be confirmed by the overunder 10 variable.
 ```{r}
 head(dat_FISCH)
 dat_FISCH$ineligible
@@ -52,49 +31,44 @@ dim(dat_FISCH)
 dat_FISCH =subset(dat_FISCH, is.na(ineligible))
 dim(dat_FISCH)
 ```
-If you get rid of the ineligible people, then there should be no cases where there is missing data for the repeat session indicator.  Then you can assume the blank one is the first data session I think (double check)
-
-If you can change NA to 1 for repeat instance variable
-
-Need a time variable
+First I am grabbing just a few variables to make the data set more manageable.  When using a data frame, you need to rename the variable (i.e. name =  variable) otherwise you will get a really long name.   
 ```{r}
-
-
-
-dat_FISCH_agg = data.frame(record_id = dat_FISCH$record_id, redcap_repeat_instance = dat_FISCH$redcap_repeat_instance, colevel_1 = dat_FISCH$colevel_1, colevel_2 = dat_FISCH$colevel_2)
-
+dat_FISCH_agg = data.frame(record_id = dat_FISCH$record_id,session1date= dat_FISCH$session1date, session2date = dat_FISCH$session2date, session3date = dat_FISCH$session3date, session4date = dat_FISCH$session4date, session5date = dat_FISCH$session5date, session6date = dat_FISCH$session6date, colevel_1 = dat_FISCH$colevel_1, colevel_2 = dat_FISCH$colevel_2, colevel_3 = dat_FISCH$colevel_3, colevel_4 = dat_FISCH$colevel_4, colevel_5 = dat_FISCH$colevel_5, colevel_6 = dat_FISCH$colevel_6,  gender = dat_FISCH$gender, race___1 = dat_FISCH$race___1, race___2 = dat_FISCH$race___2, race___3 = dat_FISCH$race___3, race___4 = dat_FISCH$race___4, race___5 = dat_FISCH$race___5, race___6 = dat_FISCH$race___6, otherrace = dat_FISCH$otherrace, income = dat_FISCH$income, education = dat_FISCH$education, ethnicity = dat_FISCH$ethnicity, relationshipstatus = dat_FISCH$relationshipstatus)
+```
+Although, this step is not necessary at this point, we want R to treat the dates as dates, so I use the formula below to translate the dates into dates that R can recongize.  We are using lowercase y, because the dates are two digits not four.
+```{r}
 head(dat_FISCH_agg)
 
-### Makes every variable have NA's
-dat_FISCH_agg[is.na(dat_FISCH_agg)]= 0
-
-dat_FISCH_agg
+dat_FISCH_agg$session1date  = as.Date(dat_FISCH_agg$session1date, format = "%m/%d/%y")
+dat_FISCH_agg$session2date  = as.Date(dat_FISCH_agg$session2date, format = "%m/%d/%y")
+dat_FISCH_agg$session3date  = as.Date(dat_FISCH_agg$session3date, format = "%m/%d/%y")
+dat_FISCH_agg$session4date  = as.Date(dat_FISCH_agg$session4date, format = "%m/%d/%y")
+dat_FISCH_agg$session5date  = as.Date(dat_FISCH_agg$session5date, format = "%m/%d/%y")
+dat_FISCH_agg$session6date  = as.Date(dat_FISCH_agg$session6date, format = "%m/%d/%y")
 ```
-
-
-
-Ok next problem is the data is in long form, but data is across different variables
-So for session one there is a data point, but for the second line for that person it is blank and then there is a variable number two
-Just grab recordID, colevel_1, colevel_2
-
-Make wide, and then grab just the ones you want and subset the data, then make long again
-
+We want the data in long form, so therefore we need to use the reshape function.  There are four arguments.  First is the data set that we want to reshape.  Second, we need to reshape, which variables are going to be in long form (so which variables to stack).  We created a list and put c in front of the list, so if we wanted to add more vairables (hint) we can do that by adding c("variable1", "variable2"..., "variableX").  Next we tell reshape the direction, which is long.  Finally, we put the number of time points, so it can create a time variable for us. 
 ```{r}
-dat_FISCH_agg = reshape(dat_FISCH_agg, v.names = c("colevel_1", "colevel_2"), direction = "wide", timevar = "redcap_repeat_instance", idvar = "record_id")
-dat_FISCH_agg
+dat_FISCH_agg_long = reshape(dat_FISCH_agg, varying = list(c("colevel_1", "colevel_2", "colevel_3", "colevel_4", "colevel_5", "colevel_6")), direction = "long", times = c(1,2,3,4,5,6))
 ```
-Now we need to drop the extra rows and only keep those with data and go long
+Next steps:
+
+1. Add the other covarying questions (I think there are two more)
+
+2. Grab the descriptives at baseline, get average CO levels at each time point (for this one think about the subset function)
+
+3. Think about how to figure out how much missing data there is by each variable
+
+Get average colevels by time point
 ```{r}
-dat_FISCH_agg_long  = data.frame(record_id = dat_FISCH_agg$record_id,colevel_1.0 = dat_FISCH_agg$colevel_1.0, colevel_2.1 = dat_FISCH_agg$colevel_2.1) 
-dat_FISCH_agg_long
+
+describe(dat_FISCH_agg)
 
 
-dat_FISCH_agg_long_test = reshape(dat_FISCH_agg_long, varying = list(c("colevel_1.0", "colevel_2.1")), direction = "long", times = c(0,1))
-dat_FISCH_agg_long_test
-
-dat_FISCH_agg_long = dat_FISCH_agg_long_test[order(dat_FISCH_agg_long_test$record_id),]
-head(dat_FISCH_agg_long)
 ```
-Now bring it back to the original data set
+
+
+
+
+
 
 
