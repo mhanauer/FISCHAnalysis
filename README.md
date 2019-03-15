@@ -174,13 +174,15 @@ upper_out = list()
 power_out = list()
 
 for(i in 1:length(d[[i]])){
-brms_model_prior_out[[i]] = brm(y ~ time*intervention + (1|subject), data = d[[i]], prior = set_prior("student_t(500,.25,.05)", class = "b", coef = "time:intervention"))
+brms_model_prior_out[[i]] = brm(y ~ time*intervention + (time|subject), data = d[[i]], prior = set_prior("student_t(10,-1.55,1.05)", class = "b", coef = "intervention"))
 brms_model_prior_summary_out[[i]] = summary(brms_model_prior_out[[i]])
-lower_out[[i]] = brms_model_prior_summary_out[[i]]$fixed[4,3]
-upper[[i]] = brms_model_prior_summary_out[[i]]$fixed[4,4]
-lower_out[[i]] = ifelse(lower_out[[i]] < 0,1,0)
+lower[[i]] = brms_model_prior_summary_out[[i]]$fixed[3,3]
+upper[[i]] = brms_model_prior_summary_out[[i]]$fixed[3,4]
+lower[[i]] = ifelse(lower[[i]] < 0,1,0)
 upper[[i]] = ifelse(upper[[i]] > 0,1,0)
 power[[i]] = sum(lower[[i]], upper[[i]])
+### If a value has a lower than zero and an upper greater than zero than not sig everything else is sig
+power[[i]] = ifelse(power[[i]] == 2, 0,1)
 power[[i]]
 }
 }
@@ -192,6 +194,10 @@ power_rep = replicate(reps, power_bayes_multi_n())
 power_rep_df = data.frame(power_rep)
 power_rep_df_mean = rowMeans(power_rep_df)
 power_rep_df_mean
+```
+Need to fix lower 
+```{r}
+
 ```
 
 
