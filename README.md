@@ -183,12 +183,21 @@ confint(model_long_mean)
 model_long_mean_scale = lmer(colevel_1_stand ~ intervention + (1| id),  data = dat_FISCH_long_complete)
 summary(model_long_mean_scale)
 
+### Get percentage change watch p-value
+model_long_mean_log = lmer(log(colevel_1) ~ intervention + (1| id),  data = dat_FISCH_long_complete)
+summary(model_long_mean_log)
+
+
 ### This model might not be good, because the interaction effect is almost perfectly correlated with the intervention
 model_long_inter = lmer(colevel_1 ~ av_ses10_center*intervention + (1| id),  data = dat_FISCH_long_complete)
 summary(model_long_inter)
 
+
+
 model_long_plus = lmer(colevel_1 ~ av_ses10_center + intervention + (1| id),  data = dat_FISCH_long_complete)
 summary(model_long_plus)
+
+
 
 #### Compare random intercepts models
 anova(model_null, model_long_mean, model_long_plus, model_long_inter)
